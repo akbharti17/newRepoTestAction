@@ -3,8 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - master  # Runs on pushes to the master branch
   pull_request:
+    branches:
+      - master  # Runs for pull requests targeting the master branch
 
 permissions:
   actions: read
@@ -14,25 +16,28 @@ jobs:
   main:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Fetch all history for accurate Git operations
 
-      # This enables task distribution via Nx Cloud
-      # Run this command as early as possible, before dependencies are installed
-      # Learn more at https://nx.dev/ci/reference/nx-cloud-cli#npx-nxcloud-startcirun
-      # - run: npx nx-cloud start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="e2e-ci"
-
-      # Cache node_modules
-      - uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - run: npm ci --legacy-peer-deps
-      - uses: nrwl/nx-set-shas@v4
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
 
-      # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
-      # - run: npx nx-cloud record -- echo Hello World
-      # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
-      - run: npx nx affected -t lint test build e2e-ci --base=origin/master
+      - name: Run affected commands
+        run: |
+          # Determine the base and head commits
+          BASE=$(git merge-base origin/master HEAD)
+          HEAD=$(git rev-parse HEAD)
+
+          echo "Base commit: $BASE"
+          echo "Head commit: $HEAD"
+
+          # Run affected commands
+          npx nx affected -t lint test build e2e-ci --base=$BASE --head=$HEAD
