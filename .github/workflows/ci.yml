@@ -39,5 +39,5 @@ jobs:
           echo "Base commit: $BASE"
           echo "Head commit: $HEAD"
 
-          # Run affected commands
-          npx nx affected -t lint test build e2e-ci --base=$BASE --head=$HEAD
+          # Run affected commands, avoid Nx Cloud specific task
+          npx nx affected -t lint test build e2e --base=$BASE --head=$HEAD
